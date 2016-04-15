@@ -17,49 +17,35 @@ public class File {
     public final static Image folderOpenedImage = new Image(ClassLoader.getSystemResourceAsStream("resources/open-folder.png"));
     public final static Image fileImage = new Image(ClassLoader.getSystemResourceAsStream("resources/file.png"));
 
-    private String name;
-    private boolean isDirectory;
+    private Boolean isDirectory;
     private ImageView image;
     private Path fullPath;
-    private long size;
+    private Long size;
     private FileTime creationDate;
 
 
     public File(Path path) {
         this.fullPath = path;
 
+        if (Files.isDirectory(path)) {
+            this.isDirectory = new Boolean(true);
+            image = new ImageView(folderOpenedImage);
+        } else {
+            this.isDirectory = new Boolean(false);
+            image = new ImageView(fileImage);
+        }
+        image.setFitWidth(16);
+        image.setFitHeight(16);
+
         try {
             BasicFileAttributes attribs = Files.readAttributes(path, BasicFileAttributes.class);
-            this.size = attribs.size();
+            if (this.isDirectory()) this.size = attribs.size();
             this.creationDate = attribs.creationTime();
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println("Nie można odczytać atrybutów");
         }
 
-        //jeśli ścieżka to tylko nazwa dysku to wyswietlamy cala sciezke
-        if (path.getNameCount() > 1)
-            this.name = path.getFileName().toString();
-        else
-            this.name = path.toString();
-
-        if (Files.isDirectory(path)) {
-            this.isDirectory = true;
-            image = new ImageView(folderOpenedImage);
-        } else {
-            this.isDirectory = false;
-            image = new ImageView(fileImage);
-        }
-        image.setFitWidth(16);
-        image.setFitHeight(16);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Path getFullPath() {
@@ -70,11 +56,11 @@ public class File {
         this.fullPath = fullPath;
     }
 
-    public long getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public void setSize(long size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
@@ -86,11 +72,15 @@ public class File {
         this.creationDate = creationDate;
     }
 
-    public boolean isDirectory() {
+    public Boolean isDirectory() {
+        return isDirectory;
+    }
+    //getter for TableCell impelemntation
+    public Boolean getIsDirectory() {
         return isDirectory;
     }
 
-    public void setDirectory(boolean directory) {
+    public void setDirectory(Boolean directory) {
         isDirectory = directory;
     }
 
