@@ -20,18 +20,20 @@ public class File {
     private Boolean isDirectory;
     private ImageView image;
     private Path fullPath;
+    private String name;
     private Long size;
     private FileTime creationDate;
 
 
     public File(Path path) {
         this.fullPath = path;
+        this.name = getFileName(path);
 
         if (Files.isDirectory(path)) {
-            this.isDirectory = new Boolean(true);
+            this.isDirectory = Boolean.TRUE;
             image = new ImageView(folderOpenedImage);
         } else {
-            this.isDirectory = new Boolean(false);
+            this.isDirectory = Boolean.FALSE;
             image = new ImageView(fileImage);
         }
         image.setFitWidth(16);
@@ -39,7 +41,7 @@ public class File {
 
         try {
             BasicFileAttributes attribs = Files.readAttributes(path, BasicFileAttributes.class);
-            if (this.isDirectory()) this.size = attribs.size();
+            if (!this.isDirectory()) this.size = attribs.size();
             this.creationDate = attribs.creationTime();
         } catch (IOException e) {
             e.printStackTrace();
@@ -90,5 +92,25 @@ public class File {
 
     public void setImage(ImageView image) {
         this.image = image;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Zwraca nazwe folderu (ostatni czlon ścieżki)
+     * @param path
+     * @return
+     */
+    public String getFileName(Path path){
+        if (path.getNameCount() > 0)
+            return(path.getFileName().toString());
+        else
+            return(path.toString());
     }
 }

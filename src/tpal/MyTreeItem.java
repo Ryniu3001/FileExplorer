@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 /**
  * Created by Marcin on 13.04.2016.
  */
+@SuppressWarnings("unchecked")
 public class MyTreeItem extends TreeItem{
 
     public final static Image folderClosedImage = new Image(ClassLoader.getSystemResourceAsStream("resources/close-folder.png"));
