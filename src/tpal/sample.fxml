@@ -39,12 +39,29 @@
             </Menu>
         </menus>
       </MenuBar>
-      <ToolBar fx:id="splitPane" prefHeight="40.0" prefWidth="200.0">
+      <SplitPane dividerPositions="0.5" prefHeight="42.0" prefWidth="1114.0">
         <items>
-          <Button mnemonicParsing="false" text="Button" />
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+               <children>
+                  <ToolBar layoutX="34.0" prefHeight="40.0" prefWidth="553.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                      <Button fx:id="leftUpButton" mnemonicParsing="false" onMouseClicked="#onLeftUpButtonAction" text="&lt;--" />
+                    </items>
+                  </ToolBar>
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+               <children>
+                  <ToolBar layoutX="-27.0" layoutY="-6.0" prefHeight="40.0" prefWidth="553.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                      <Button fx:id="rightUpButton" mnemonicParsing="false" onMouseClicked="#onRightUpButtonAction" text="&lt;--" />
+                    </items>
+                  </ToolBar>
+               </children>
+            </AnchorPane>
         </items>
-      </ToolBar>
-      <SplitPane dividerPositions="0.4727272727272727" maxWidth="1.7976931348623157E308" minWidth="0.0" prefHeight="527.0" prefWidth="1114.0" VBox.vgrow="ALWAYS">
+      </SplitPane>
+      <SplitPane dividerPositions="0.5" maxWidth="1.7976931348623157E308" minWidth="0.0" prefHeight="527.0" prefWidth="1114.0" VBox.vgrow="ALWAYS">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                <children>
@@ -73,7 +90,7 @@
                <children>
                   <VBox prefHeight="753.0" prefWidth="583.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <TabPane prefHeight="724.0" prefWidth="583.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+                        <TabPane fx:id="rightPane" prefHeight="724.0" prefWidth="583.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
                           <tabs>
                             <Tab text="Untitled Tab 1">
                               <content>
@@ -87,7 +104,7 @@
                             </Tab>
                           </tabs>
                         </TabPane>
-                        <TextField />
+                        <TextField fx:id="rightTextField" />
                      </children>
                   </VBox>
                </children>

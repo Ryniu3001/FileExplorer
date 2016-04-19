@@ -1,5 +1,6 @@
 package tpal;
 
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -7,22 +8,27 @@ import javafx.event.EventHandler;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Marcin on 14.04.2016.
  */
 @SuppressWarnings("unchecked")
-public class MyTableView extends TableView {
+public class MyTableView extends TableView{
 
-    public static final String BACK_ACTION_STRING = "<--";
-
-    public SimpleStringProperty actualDir;
+    private SimpleStringProperty actualDir;
+    private SimpleBooleanProperty disableUpButton = new SimpleBooleanProperty(false);
+    private Path actualPath;
 
     private TextField textField;
     private final ObservableList<File> data = FXCollections.observableArrayList();
@@ -30,9 +36,10 @@ public class MyTableView extends TableView {
 
     public MyTableView(TextField tf){
         super();
-        setComputerRootDirectory();
         actualDir = new SimpleStringProperty("\\");
         textField = tf;
+        setComputerRootDirectory();
+
 
         TableColumn imageColumn = new TableColumn();
         imageColumn.setCellValueFactory(new PropertyValueFactory<File, Boolean>("isDirectory"));
@@ -48,15 +55,6 @@ public class MyTableView extends TableView {
             return cell;
         });
         pathColumn.prefWidthProperty().bind(this.widthProperty().divide(2));
-        pathColumn.setComparator((o1, o2) -> {
-            System.out.println(pathColumn.getSortType());
-            if (((String)o1).equals(BACK_ACTION_STRING))
-                return -1;
-            else if ((((String)o2).equals(BACK_ACTION_STRING)))
-                return 1;
-            else
-                return  ((String)o1).compareTo((String)o2);
-        });
 
         TableColumn sizeColumn = new TableColumn(Controller.bundle.getString("column.size"));
         sizeColumn.setCellValueFactory(new PropertyValueFactory<File, String>("size"));
@@ -79,7 +77,10 @@ public class MyTableView extends TableView {
         this.setItems(data);
         this.getColumns().addAll(imageColumn, pathColumn, sizeColumn, dateColumn);
 
+        this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
+        this.setContextMenu();
+        this.setDragMechanism();
 
     }
 
@@ -93,28 +94,21 @@ public class MyTableView extends TableView {
             File file = new File(name);
             data.add(file);
         }
+        textField.setText("\\");
+        actualDir.set("\\");
+        actualPath = null;
+        disableUpButton.set(true);
+
     }
 
     /**
      * Ustawia katalog główny dla tabeli na wskazany w parametrze.
-     * @param path
+     * @param f
      */
-    private void setTreeRootDirectory(Path path){
+    private void setTreeRootDirectory(File f){
+        Path path = f.getFullPath();
         DirectoryStream<Path> dir;
         data.clear();
-
-        /* Nie da sie pobrac Path do sciezki z wylistowanymi dyskami, dlatego
-            obejściem jest wstawienie sztucznej ścieżki i przy klienięciu porównywanie.
-            Jeśli będzie tam znak "\" to należy wyświetlić listę dysków
-         */
-        File parent;
-        if (path.equals(path.getRoot())){
-            parent = new File(Paths.get("\\"));
-        }else{
-            parent = new File(path.getParent());
-        }
-        parent.setName(BACK_ACTION_STRING);
-        data.add(parent);
 
         try {
             dir = Files.newDirectoryStream(path);
@@ -122,6 +116,10 @@ public class MyTableView extends TableView {
                 File item = new File(file);
                 data.add(item);
             }
+            actualDir.set(f.getName());
+            actualPath = path;
+            textField.setText(actualPath.toString());
+            disableUpButton.set(false);
         } catch (IOException e) {
             e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -133,22 +131,25 @@ public class MyTableView extends TableView {
 
     }
 
-
+    /**
+     * Klikniecie na komorke na liscie
+     */
     class MyEventHandler implements  EventHandler<MouseEvent>{
 
         @Override
         public void handle(MouseEvent event) {
-            TableCell cell = (TableCell) event.getSource();
-            int index = cell.getIndex();
-            if (index < data.size() && data.get(index).isDirectory()){
-                textField.setText(data.get(index).getFullPath().toString());
-                actualDir.set(data.get(index).getName());
-                if (data.get(index).getFullPath().toString().equals("\\"))
-                    setComputerRootDirectory();
-                else
-                    setTreeRootDirectory(data.get(index).getFullPath());
-            }
+            if (event.getButton().equals(MouseButton.PRIMARY)) {
+                TableCell cell = (TableCell) event.getSource();
+                int index = cell.getIndex();
+                if (index >= data.size())
+                    getSelectionModel().clearSelection();
 
+                if (event.getClickCount() == 2) {
+                    if (index < data.size() && data.get(index).isDirectory()) {
+                        setTreeRootDirectory(data.get(index));
+                    }
+                }
+            }
         }
     }
 
@@ -209,4 +210,91 @@ public class MyTableView extends TableView {
             }
         }
     }
+
+    private void setContextMenu(){
+        MenuItem item1 = new MenuItem("Delete");
+        ContextMenu ctxMenu = new ContextMenu(item1);
+        this.setContextMenu(ctxMenu);
+    }
+
+    private void setDragMechanism(){
+        this.setOnDragDetected(event -> {
+            Dragboard dragBoard = startDragAndDrop(TransferMode.COPY);
+            ClipboardContent content = new ClipboardContent();
+            File f = (File)((MyTableView)event.getSource()).getSelectionModel().getSelectedItem();
+            List<java.io.File> list = new ArrayList<java.io.File>();
+            list.add(f.getFullPath().toFile());
+            content.putFiles(new ArrayList<java.io.File>(list));
+            dragBoard.setContent(content);
+            event.consume();
+            System.out.println(f.getName());
+        });
+
+        this.setOnDragOver(event -> {
+            Dragboard db = event.getDragboard();
+            if (db.hasFiles()) {
+                event.acceptTransferModes(TransferMode.COPY);
+            }
+            event.consume();
+        });
+
+        this.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasFiles()) {
+                System.out.println("Dropped: ");
+                TableCell v = ((TableCell)event.getTarget());
+                //try {
+                    Path source = db.getFiles().get(0).toPath();
+                    Path destination = ((MyTableView)v.getTableView()).actualPath.resolve(db.getFiles().get(0).toPath().getFileName());
+
+                    ProgressWindow progressBar = new ProgressWindow(source.toFile(), destination.toFile());
+
+
+                refreshDir();
+               // } catch (IOException e) {
+                //    e.printStackTrace();
+                //}
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
+    }
+
+    public void goUp() {
+        if (actualPath.getParent() == null)
+            setComputerRootDirectory();
+        else
+            setTreeRootDirectory(new File(actualPath.getParent()));
+    }
+
+    public void refreshDir(){
+        setTreeRootDirectory(new File(actualPath));
+    }
+
+    public String getActualDir() {
+        return actualDir.get();
+    }
+
+    public SimpleStringProperty actualDirProperty() {
+        return actualDir;
+    }
+
+    public void setActualDir(String actualDir) {
+        this.actualDir.set(actualDir);
+    }
+
+    public boolean getDisableUpButton() {
+        return disableUpButton.get();
+    }
+
+    public SimpleBooleanProperty disableUpButtonProperty() {
+        return disableUpButton;
+    }
+
+    public void setDisableUpButton(boolean disableUpButton) {
+        this.disableUpButton.set(disableUpButton);
+    }
+
 }

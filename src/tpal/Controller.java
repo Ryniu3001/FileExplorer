@@ -4,9 +4,11 @@ package tpal;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 
 import java.io.IOException;
 import java.net.URL;
@@ -19,10 +21,16 @@ public class Controller implements Initializable {
 
     @FXML private TabPane leftPane;
     @FXML private TextField leftTextField;
+    @FXML private TabPane rightPane;
+    @FXML private TextField rightTextField;
     @FXML private MenuItem langPL;
     @FXML private MenuItem langEN;
+    @FXML private Button leftUpButton;
+    @FXML private Button rightUpButton;
     public static ResourceBundle bundle;
     public static Main main;
+
+
 
 /*    @FXML
     public void initialize(){
@@ -43,7 +51,16 @@ public class Controller implements Initializable {
         leftTextField.editableProperty().setValue(false);
         MyTableView tableView = new MyTableView(leftTextField);
         leftPane.getTabs().get(0).setContent(tableView);
-        leftPane.getTabs().get(0).textProperty().bind(tableView.actualDir);
+        leftPane.getTabs().get(0).textProperty().bind(tableView.actualDirProperty());
+        leftUpButton.disableProperty().bind(tableView.disableUpButtonProperty());
+
+        rightTextField.editableProperty().setValue(false);
+        MyTableView tableView2 = new MyTableView(rightTextField);
+        rightPane.getTabs().get(0).setContent(tableView2);
+        rightPane.getTabs().get(0).textProperty().bind(tableView2.actualDirProperty());
+        rightUpButton.disableProperty().bind(tableView2.disableUpButtonProperty());
+
+
 
     }
 
@@ -69,8 +86,16 @@ public class Controller implements Initializable {
 
     }
 
-    private void setTextProperties(){
+    @FXML
+    private void onLeftUpButtonAction(MouseEvent event){
+        MyTableView table = (MyTableView) leftPane.getSelectionModel().getSelectedItem().getContent();
+        table.goUp();
+    }
 
+    @FXML
+    private void onRightUpButtonAction(MouseEvent event){
+        MyTableView table = (MyTableView) rightPane.getSelectionModel().getSelectedItem().getContent();
+        table.goUp();
     }
 
 }
