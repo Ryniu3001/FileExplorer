@@ -12,7 +12,7 @@ import java.nio.file.attribute.FileTime;
 /**
  * Created by Marcin on 14.04.2016.
  */
-public class File {
+public class MyFile {
     public final static Image folderClosedImage = new Image(ClassLoader.getSystemResourceAsStream("resources/close-folder.png"));
     public final static Image folderOpenedImage = new Image(ClassLoader.getSystemResourceAsStream("resources/open-folder.png"));
     public final static Image fileImage = new Image(ClassLoader.getSystemResourceAsStream("resources/file.png"));
@@ -25,7 +25,7 @@ public class File {
     private FileTime creationDate;
 
 
-    public File(Path path) {
+    public MyFile(Path path) {
         this.fullPath = path;
         this.name = getFileName(path);
 

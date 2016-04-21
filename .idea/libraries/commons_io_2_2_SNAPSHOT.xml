@@ -4,6 +4,9 @@
       <root url="jar://$PROJECT_DIR$/../../Downloads/commons-io-2.4-src/target/commons-io-2.2-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../Downloads/commons-io-2.4-src/target/commons-io-2.2-SNAPSHOT-src.zip!/commons-io-2.2-SNAPSHOT-src/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/../../Downloads/commons-io-2.4-src/target/commons-io-2.2-SNAPSHOT-src.zip!/commons-io-2.2-SNAPSHOT-src/src/test/java" />
+    </SOURCES>
   </library>
 </component>

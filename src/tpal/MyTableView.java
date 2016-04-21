@@ -31,7 +31,7 @@ public class MyTableView extends TableView{
     private Path actualPath;
 
     private TextField textField;
-    private final ObservableList<File> data = FXCollections.observableArrayList();
+    private final ObservableList<MyFile> data = FXCollections.observableArrayList();
     private static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm");
 
     public MyTableView(TextField tf){
@@ -42,13 +42,13 @@ public class MyTableView extends TableView{
 
 
         TableColumn imageColumn = new TableColumn();
-        imageColumn.setCellValueFactory(new PropertyValueFactory<File, Boolean>("isDirectory"));
+        imageColumn.setCellValueFactory(new PropertyValueFactory<MyFile, Boolean>("isDirectory"));
         imageColumn.setCellFactory(param -> new booleanTableCell());
         imageColumn.prefWidthProperty().bind(this.widthProperty().divide(20));
         imageColumn.maxWidthProperty().bind(this.widthProperty().divide(20));
 
         TableColumn pathColumn = new TableColumn(Controller.bundle.getString("column.filename"));
-        pathColumn.setCellValueFactory(new PropertyValueFactory<File, String>("name"));
+        pathColumn.setCellValueFactory(new PropertyValueFactory<MyFile, String>("name"));
         pathColumn.setCellFactory(param -> {
             StringTableCell cell = new StringTableCell();
             cell.addEventHandler(MouseEvent.MOUSE_CLICKED, new MyEventHandler());
@@ -57,7 +57,7 @@ public class MyTableView extends TableView{
         pathColumn.prefWidthProperty().bind(this.widthProperty().divide(2));
 
         TableColumn sizeColumn = new TableColumn(Controller.bundle.getString("column.size"));
-        sizeColumn.setCellValueFactory(new PropertyValueFactory<File, String>("size"));
+        sizeColumn.setCellValueFactory(new PropertyValueFactory<MyFile, String>("size"));
         sizeColumn.setCellFactory(param -> {
             LongTableCell cell = new LongTableCell();
             cell.addEventHandler(MouseEvent.MOUSE_CLICKED, new MyEventHandler());
@@ -66,7 +66,7 @@ public class MyTableView extends TableView{
         sizeColumn.prefWidthProperty().bind(this.widthProperty().divide(5));
 
         TableColumn dateColumn = new TableColumn(Controller.bundle.getString("column.date"));
-        dateColumn.setCellValueFactory(new PropertyValueFactory<File, String>("creationDate"));
+        dateColumn.setCellValueFactory(new PropertyValueFactory<MyFile, String>("creationDate"));
         dateColumn.setCellFactory(param -> {
             DateTableCell cell =  new DateTableCell();
             cell.addEventHandler(MouseEvent.MOUSE_CLICKED, new MyEventHandler());
@@ -91,7 +91,7 @@ public class MyTableView extends TableView{
         data.clear();
         Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
         for(Path name : rootDirectories){
-            File file = new File(name);
+            MyFile file = new MyFile(name);
             data.add(file);
         }
         textField.setText("\\");
@@ -105,7 +105,7 @@ public class MyTableView extends TableView{
      * Ustawia katalog główny dla tabeli na wskazany w parametrze.
      * @param f
      */
-    private void setTreeRootDirectory(File f){
+    private void setTreeRootDirectory(MyFile f){
         Path path = f.getFullPath();
         DirectoryStream<Path> dir;
         data.clear();
@@ -113,7 +113,7 @@ public class MyTableView extends TableView{
         try {
             dir = Files.newDirectoryStream(path);
             for(Path file : dir){
-                File item = new File(file);
+                MyFile item = new MyFile(file);
                 data.add(item);
             }
             actualDir.set(f.getName());
@@ -153,7 +153,7 @@ public class MyTableView extends TableView{
         }
     }
 
-    class StringTableCell extends TableCell<File, String> {
+    class StringTableCell extends TableCell<MyFile, String> {
         @Override
         protected void updateItem(String item, boolean empty) {
             super.updateItem(item, empty);
@@ -165,7 +165,7 @@ public class MyTableView extends TableView{
         }
     }
 
-    class LongTableCell extends TableCell<File, Long>{
+    class LongTableCell extends TableCell<MyFile, Long>{
         @Override
         protected void updateItem(Long item, boolean empty) {
             super.updateItem(item, empty);
@@ -177,7 +177,7 @@ public class MyTableView extends TableView{
         }
     }
 
-    class DateTableCell extends TableCell<File, FileTime>{
+    class DateTableCell extends TableCell<MyFile, FileTime>{
         @Override
         protected void updateItem(FileTime item, boolean empty) {
             super.updateItem(item, empty);
@@ -190,7 +190,7 @@ public class MyTableView extends TableView{
         }
     }
 
-    class booleanTableCell extends TableCell<File, Boolean>{
+    class booleanTableCell extends TableCell<MyFile, Boolean>{
         @Override
         protected void updateItem(Boolean item, boolean empty) {
             super.updateItem(item, empty);
@@ -198,9 +198,9 @@ public class MyTableView extends TableView{
             if (item != null) {
                 ImageView iv;
                 if (item.booleanValue()) {
-                    iv = new ImageView(File.folderClosedImage);
+                    iv = new ImageView(MyFile.folderClosedImage);
                 } else {
-                    iv = new ImageView(File.fileImage);
+                    iv = new ImageView(MyFile.fileImage);
                 }
                 iv.setFitWidth(16);
                 iv.setFitHeight(16);
@@ -212,28 +212,39 @@ public class MyTableView extends TableView{
     }
 
     private void setContextMenu(){
-        MenuItem item1 = new MenuItem("Delete");
-        ContextMenu ctxMenu = new ContextMenu(item1);
+        MenuItem delete = new MenuItem("Delete");
+        delete.setOnAction(event -> {
+            if (this.getSelectionModel().getSelectedItem() != null){
+             //   MyFile file = (MyFile) this.getSelectionModel().getSelectedItem();
+              //  FileTask task = new FileTask(file.getFullPath().toFile());
+
+             //   task.addOnDoneListener(() -> refreshDir());
+            //    new Thread(task).start();
+            }
+        });
+
+        ContextMenu ctxMenu = new ContextMenu(delete);
         this.setContextMenu(ctxMenu);
     }
 
     private void setDragMechanism(){
         this.setOnDragDetected(event -> {
-            Dragboard dragBoard = startDragAndDrop(TransferMode.COPY);
+            Dragboard dragBoard = startDragAndDrop(TransferMode.COPY_OR_MOVE);
             ClipboardContent content = new ClipboardContent();
-            File f = (File)((MyTableView)event.getSource()).getSelectionModel().getSelectedItem();
+            List<MyFile> selectedFiles = (List<MyFile>)((MyTableView)event.getSource()).getSelectionModel().getSelectedItems();
             List<java.io.File> list = new ArrayList<java.io.File>();
-            list.add(f.getFullPath().toFile());
+            for (MyFile file : selectedFiles){
+                list.add(file.getFullPath().toFile());
+            }
             content.putFiles(new ArrayList<java.io.File>(list));
             dragBoard.setContent(content);
             event.consume();
-            System.out.println(f.getName());
         });
 
         this.setOnDragOver(event -> {
             Dragboard db = event.getDragboard();
             if (db.hasFiles()) {
-                event.acceptTransferModes(TransferMode.COPY);
+                event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
             }
             event.consume();
         });
@@ -244,17 +255,19 @@ public class MyTableView extends TableView{
             if (db.hasFiles()) {
                 System.out.println("Dropped: ");
                 TableCell v = ((TableCell)event.getTarget());
-                //try {
-                    Path source = db.getFiles().get(0).toPath();
-                    Path destination = ((MyTableView)v.getTableView()).actualPath.resolve(db.getFiles().get(0).toPath().getFileName());
 
-                    ProgressWindow progressBar = new ProgressWindow(source.toFile(), destination.toFile());
-
-
-                refreshDir();
-               // } catch (IOException e) {
-                //    e.printStackTrace();
-                //}
+                //Path source = db.getFiles().get(0).toPath();
+                List<Path> sources = new ArrayList<Path>();
+                for (java.io.File file : db.getFiles())
+                    sources.add(file.toPath());
+                //Path destination = ((MyTableView)v.getTableView()).actualPath.resolve(db.getFiles().get(0).toPath().getFileName());
+                Path destination = ((MyTableView)v.getTableView()).actualPath;
+                if (!sources.contains(destination)) {
+                    FileTask task = new FileTask(db.getFiles(), destination, event.getTransferMode().toString());
+                    task.addOnDoneListener(() -> refreshDir());
+                    task.addOnDoneListener(() -> ((MyTableView) event.getGestureSource()).refreshDir());
+                    new Thread(task).start();
+                }
                 success = true;
             }
             event.setDropCompleted(success);
@@ -266,11 +279,11 @@ public class MyTableView extends TableView{
         if (actualPath.getParent() == null)
             setComputerRootDirectory();
         else
-            setTreeRootDirectory(new File(actualPath.getParent()));
+            setTreeRootDirectory(new MyFile(actualPath.getParent()));
     }
 
     public void refreshDir(){
-        setTreeRootDirectory(new File(actualPath));
+        setTreeRootDirectory(new MyFile(actualPath));
     }
 
     public String getActualDir() {
