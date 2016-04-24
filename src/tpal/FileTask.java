@@ -1,5 +1,6 @@
 package tpal;
 
+import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.input.TransferMode;
 import org.apache.commons.io.CopyProgressListener;
@@ -9,6 +10,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.FutureTask;
+
+import static org.apache.commons.io.FileUtils.deleteQuietly;
 
 /**
  * Created by Marcin on 20.04.2016.
@@ -20,7 +24,6 @@ public class FileTask extends Task implements CopyProgressListener {
     private long workDone = 0;
     private ProgressWindow progressWindow;
     private List<FileTaskWorkDoneListener> listener = new ArrayList<>();
-
     private String mode;
 
     public FileTask(List<java.io.File> source){
@@ -31,10 +34,8 @@ public class FileTask extends Task implements CopyProgressListener {
         super();
         this.source = source;
         this.destination = destination;
-
         this.workDone = 0;
         this.mode = transferMode;
-
         progressWindow = new ProgressWindow(this);
 
     }
@@ -55,12 +56,25 @@ public class FileTask extends Task implements CopyProgressListener {
                 else
                     FileUtils.copyFile(file, destination.resolve(file.getName()).toFile(), true, this);
             } else if (mode.equals("DELETE")) {
-                FileUtils.deleteQuietly(file, this);
+                deleteQuietly(file, this);
             } else if (mode.equals(TransferMode.MOVE.toString())){
                 if (file.isDirectory())
                     FileUtils.moveDirectory(file, destination.resolve(file.getName()).toFile(), this);
-                else
-                    FileUtils.moveFile(file, destination.resolve(file.getName()).toFile(), this);
+                else {
+                    boolean move = true;
+                    if (destination.resolve(file.getName()).toFile().exists()){
+                        FutureTask<Boolean> futureTask = new FutureTask(() -> {
+                            return MyTableView.showConfirmationDialog("move.header","move.text", destination.resolve(file.getName()).toFile());
+                        });
+                        Platform.runLater(futureTask);
+                        move = futureTask.get();
+                        if (move) FileUtils.deleteQuietly(destination.resolve(file.getName()).toFile());
+                    }
+                    if (move)
+                        FileUtils.moveFile(file, destination.resolve(file.getName()).toFile(), this);
+                    else
+                        update(FileUtils.sizeOf(file), true, file, destination.resolve(file.getName()).toFile());
+                }
             }
         }
 
@@ -70,6 +84,7 @@ public class FileTask extends Task implements CopyProgressListener {
     @Override
     synchronized public void update(long l, boolean b, File file, File file1) {
         workDone += l;
+        System.out.println(file.getName());
         if (workDone == 0 && workMax == 0) { //podczas usuwania pustego folderu
             workDone = 1;
             workMax = 1;
@@ -79,7 +94,6 @@ public class FileTask extends Task implements CopyProgressListener {
             updateMessage(file.getAbsolutePath() + " deleted");
         else
             updateMessage(file.getAbsolutePath() + " ==> " + file1.getAbsolutePath());
-
 
         if (workDone >= workMax){
             progressWindow.getCancelButton().setDisable(true);
@@ -93,6 +107,7 @@ public class FileTask extends Task implements CopyProgressListener {
             for (FileTaskWorkDoneListener listener : this.listener) listener.onFileTaskDone();
         }
     }
+
 
     public void addOnDoneListener(FileTaskWorkDoneListener listener){
         this.listener.add(listener);

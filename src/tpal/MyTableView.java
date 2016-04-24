@@ -9,7 +9,9 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
+import javafx.scene.layout.StackPane;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
@@ -19,6 +21,7 @@ import java.nio.file.attribute.FileTime;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by Marcin on 14.04.2016.
@@ -211,20 +214,42 @@ public class MyTableView extends TableView{
         }
     }
 
+    //TODO: Usuwanie katalogow do ktorych nie mamy praw dostepu
     private void setContextMenu(){
-        MenuItem delete = new MenuItem("Delete");
+        MenuItem delete = new MenuItem(Controller.bundle.getString("remove.menuitem"));
         delete.setOnAction(event -> {
-            if (this.getSelectionModel().getSelectedItem() != null){
-             //   MyFile file = (MyFile) this.getSelectionModel().getSelectedItem();
-              //  FileTask task = new FileTask(file.getFullPath().toFile());
+            if (this.getSelectionModel().getSelectedItem() != null && showConfirmationDialog("remove.header", "remove.text", null)){
+                List<MyFile> files = (List<MyFile>) this.getSelectionModel().getSelectedItems();
+                List<File> list = new ArrayList<File>();
+                for (MyFile f : files)
+                    list.add(f.getFullPath().toFile());
 
-             //   task.addOnDoneListener(() -> refreshDir());
-            //    new Thread(task).start();
+                FileTask task = new FileTask(list);
+
+                task.addOnDoneListener(() -> refreshDir());
+                new Thread(task).start();
             }
         });
 
         ContextMenu ctxMenu = new ContextMenu(delete);
         this.setContextMenu(ctxMenu);
+    }
+
+    public static boolean showConfirmationDialog(String header, String content, File file){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(Controller.bundle.getString("remove.title"));
+        alert.setHeaderText(Controller.bundle.getString(header));
+        if (file == null)
+            alert.setContentText(Controller.bundle.getString(content));
+        else
+            alert.setContentText(Controller.bundle.getString(content) + System.lineSeparator() + file.getAbsolutePath());
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.get() == ButtonType.OK){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private void setDragMechanism(){
@@ -243,7 +268,9 @@ public class MyTableView extends TableView{
 
         this.setOnDragOver(event -> {
             Dragboard db = event.getDragboard();
-            if (db.hasFiles()) {
+            if (event.getGestureSource() == this){
+                event.acceptTransferModes(TransferMode.NONE);
+            }else if (db.hasFiles()) {
                 event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
             }
             event.consume();
@@ -254,14 +281,21 @@ public class MyTableView extends TableView{
             boolean success = false;
             if (db.hasFiles()) {
                 System.out.println("Dropped: ");
-                TableCell v = ((TableCell)event.getTarget());
+                Path destinationPath = null;
+                if (event.getTarget() instanceof TableCell) {
+                    TableCell v = ((TableCell) event.getTarget());
+                    destinationPath = ((MyTableView)v.getTableView()).actualPath;
+                }else{
+                    MyTableView view = (MyTableView)((StackPane)event.getTarget()).getParent();
+                    destinationPath = view.actualPath;
+                }
 
                 //Path source = db.getFiles().get(0).toPath();
                 List<Path> sources = new ArrayList<Path>();
                 for (java.io.File file : db.getFiles())
                     sources.add(file.toPath());
                 //Path destination = ((MyTableView)v.getTableView()).actualPath.resolve(db.getFiles().get(0).toPath().getFileName());
-                Path destination = ((MyTableView)v.getTableView()).actualPath;
+                Path destination = destinationPath;
                 if (!sources.contains(destination)) {
                     FileTask task = new FileTask(db.getFiles(), destination, event.getTransferMode().toString());
                     task.addOnDoneListener(() -> refreshDir());
