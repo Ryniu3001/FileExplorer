@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Created by Marcin on 19.04.2016.
@@ -37,6 +38,7 @@ public class ProgressWindow {
 
         cancelButton.setOnAction(event -> {
             cancelButton.setDisable(true);
+            FileUtils.operationCanceled = true;
             worker.cancel(true);
 
             progressBar.progressProperty().unbind();

@@ -25,9 +25,10 @@ public class FileTask extends Task implements CopyProgressListener {
     private ProgressWindow progressWindow;
     private List<FileTaskWorkDoneListener> listener = new ArrayList<>();
     private String mode;
+    private static final String deleteOperationType = "DELETE";
 
     public FileTask(List<java.io.File> source){
-        this(source, null, "DELETE");
+        this(source, null, deleteOperationType);
     }
 
     public FileTask(List<java.io.File> source, Path destination, String transferMode){
@@ -55,7 +56,7 @@ public class FileTask extends Task implements CopyProgressListener {
                     FileUtils.copyDirectoryWithListener(file, destination.resolve(file.getName()).toFile(), this);
                 else
                     FileUtils.copyFile(file, destination.resolve(file.getName()).toFile(), true, this);
-            } else if (mode.equals("DELETE")) {
+            } else if (mode.equals(deleteOperationType)) {
                 deleteQuietly(file, this);
             } else if (mode.equals(TransferMode.MOVE.toString())){
                 if (file.isDirectory())
@@ -78,6 +79,7 @@ public class FileTask extends Task implements CopyProgressListener {
             }
         }
 
+        FileUtils.operationCanceled = false;
         return true;
     }
 
@@ -85,15 +87,14 @@ public class FileTask extends Task implements CopyProgressListener {
     @Override
     synchronized public void update(long l, boolean b, File file, File file1) {
         workDone += l;
-        System.out.println(file.getName());
         if (workDone == 0 && workMax == 0) { //podczas usuwania pustego folderu
             workDone = 1;
             workMax = 1;
         }
         updateProgress(workDone, workMax);
-        if (mode.equals("DELETE"))
+        if (mode.equals(deleteOperationType) && file != null)
             updateMessage(file.getAbsolutePath() + " deleted");
-        else
+        else if (file != null && file1 != null)
             updateMessage(file.getAbsolutePath() + " ==> " + file1.getAbsolutePath());
 
         if (workDone >= workMax){

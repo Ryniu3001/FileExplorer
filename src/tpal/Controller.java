@@ -4,10 +4,7 @@ package tpal;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 
 import java.io.IOException;
@@ -53,14 +50,25 @@ public class Controller implements Initializable {
         leftPane.getTabs().get(0).setContent(tableView);
         leftPane.getTabs().get(0).textProperty().bind(tableView.actualDirProperty());
         leftUpButton.disableProperty().bind(tableView.disableUpButtonProperty());
+        leftPane.getTabs().remove(1);
 
         rightTextField.editableProperty().setValue(false);
         MyTableView tableView2 = new MyTableView(rightTextField);
         rightPane.getTabs().get(0).setContent(tableView2);
         rightPane.getTabs().get(0).textProperty().bind(tableView2.actualDirProperty());
         rightUpButton.disableProperty().bind(tableView2.disableUpButtonProperty());
+        rightPane.getTabs().remove(1);
 
+        addContextMenuToTabPane(leftPane);
+        addContextMenuToTabPane(rightPane);
 
+        leftPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            leftUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
+        });
+
+        rightPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            rightUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
+        });
 
     }
 
@@ -96,6 +104,30 @@ public class Controller implements Initializable {
     private void onRightUpButtonAction(MouseEvent event){
         MyTableView table = (MyTableView) rightPane.getSelectionModel().getSelectedItem().getContent();
         table.goUp();
+    }
+
+    /**
+     * Dodaje opcje dodawania nowej zakladki.
+     * @param pane
+     */
+    private void addContextMenuToTabPane(TabPane pane){
+        ContextMenu menu = new ContextMenu();
+        MenuItem addTabItem = new MenuItem("Add");
+        addTabItem.setOnAction(event -> {
+            MyTableView tableView = null;
+            if (pane.getId().equals("leftPane")) {
+                tableView = new MyTableView(leftTextField);
+            }else if (pane.getId().equals("rightPane")) {
+                tableView = new MyTableView(rightTextField);
+            }
+            Tab newTab = new Tab("\\");
+            newTab.setContent(tableView);
+            newTab.textProperty().bind(tableView.actualDirProperty());
+            pane.getTabs().add(newTab);
+        });
+
+        menu.getItems().addAll(addTabItem);
+        pane.setContextMenu(menu);
     }
 
 }

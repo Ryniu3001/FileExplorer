@@ -239,9 +239,9 @@ public class MyTableView extends TableView{
                     list.add(f.getFullPath().toFile());
 
                 FileTask task = new FileTask(list);
-
                 task.addOnDoneListener(() -> refreshDir());
                 new Thread(task).start();
+
             }
         });
 
@@ -332,6 +332,7 @@ public class MyTableView extends TableView{
 
     public void refreshDir(){
         setTreeRootDirectory(new MyFile(actualPath));
+        this.refresh();
     }
 
     public String getActualDir() {
