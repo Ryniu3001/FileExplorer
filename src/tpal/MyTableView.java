@@ -44,14 +44,14 @@ public class MyTableView extends TableView{
         setComputerRootDirectory();
 
 
-        TableColumn imageColumn = new TableColumn();
+/*        TableColumn imageColumn = new TableColumn();
         imageColumn.setCellValueFactory(new PropertyValueFactory<MyFile, Boolean>("isDirectory"));
         imageColumn.setCellFactory(param -> new booleanTableCell());
         imageColumn.prefWidthProperty().bind(this.widthProperty().divide(20));
-        imageColumn.maxWidthProperty().bind(this.widthProperty().divide(20));
+        imageColumn.maxWidthProperty().bind(this.widthProperty().divide(20));*/
 
         TableColumn pathColumn = new TableColumn(Controller.bundle.getString("column.filename"));
-        pathColumn.setCellValueFactory(new PropertyValueFactory<MyFile, String>("name"));
+        pathColumn.setCellValueFactory(new PropertyValueFactory<MyFile, Path>("fullPath"));
         pathColumn.setCellFactory(param -> {
             StringTableCell cell = new StringTableCell();
             cell.addEventHandler(MouseEvent.MOUSE_CLICKED, new MyEventHandler());
@@ -78,7 +78,7 @@ public class MyTableView extends TableView{
         dateColumn.prefWidthProperty().bind(this.widthProperty().divide(5));
 
         this.setItems(data);
-        this.getColumns().addAll(imageColumn, pathColumn, sizeColumn, dateColumn);
+        this.getColumns().addAll(pathColumn, sizeColumn, dateColumn);
 
         this.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
@@ -156,14 +156,28 @@ public class MyTableView extends TableView{
         }
     }
 
-    class StringTableCell extends TableCell<MyFile, String> {
+    class StringTableCell extends TableCell<MyFile, Path> {
         @Override
-        protected void updateItem(String item, boolean empty) {
+        protected void updateItem(Path item, boolean empty) {
             super.updateItem(item, empty);
             if (item != null) {
-                setText(item);
+                if (item.getFileName() == null)
+                    setText(item.toString());
+                else
+                    setText(item.getFileName().toString());
+
+                ImageView iv;
+                if (item.toFile().isDirectory()) {
+                    iv = new ImageView(MyFile.folderClosedImage);
+                } else {
+                    iv = new ImageView(MyFile.fileImage);
+                }
+                iv.setFitWidth(16);
+                iv.setFitHeight(16);
+                setGraphic(iv);
             } else {
                 setText(null);
+                setGraphic(null);
             }
         }
     }

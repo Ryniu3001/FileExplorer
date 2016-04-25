@@ -81,6 +81,7 @@ public class FileTask extends Task implements CopyProgressListener {
         return true;
     }
 
+
     @Override
     synchronized public void update(long l, boolean b, File file, File file1) {
         workDone += l;
