@@ -62,12 +62,17 @@ public class Controller implements Initializable {
         addContextMenuToTabPane(leftPane);
         addContextMenuToTabPane(rightPane);
 
+        leftPane.tabClosingPolicyProperty().set(TabPane.TabClosingPolicy.SELECTED_TAB);
+        rightPane.tabClosingPolicyProperty().set(TabPane.TabClosingPolicy.SELECTED_TAB);
+
         leftPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            leftUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
+            if (newValue != null)
+                leftUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
         });
 
         rightPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            rightUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
+            if (newValue != null)
+                rightUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
         });
 
 
@@ -120,7 +125,7 @@ public class Controller implements Initializable {
      */
     private void addContextMenuToTabPane(TabPane pane){
         ContextMenu menu = new ContextMenu();
-        MenuItem addTabItem = new MenuItem("Add");
+        MenuItem addTabItem = new MenuItem(Controller.bundle.getString("menu.add.tab"));
         addTabItem.setOnAction(event -> {
             MyTableView tableView = null;
             if (pane.getId().equals("leftPane")) {

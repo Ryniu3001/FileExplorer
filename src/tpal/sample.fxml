@@ -16,17 +16,17 @@
    <children>
       <MenuBar>
         <menus>
-          <Menu mnemonicParsing="false" text="%menu.file">
+          <Menu mnemonicParsing="false" text="%menu.file" visible="false">
             <items>
               <MenuItem mnemonicParsing="false" text="Close" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="%menu.edit">
+          <Menu mnemonicParsing="false" text="%menu.edit" visible="false">
             <items>
               <MenuItem mnemonicParsing="false" text="Delete" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="%menu.help">
+          <Menu mnemonicParsing="false" text="%menu.help" visible="false">
             <items>
               <MenuItem mnemonicParsing="false" text="About" />
             </items>

@@ -158,8 +158,8 @@ public class MyTableView extends TableView{
                                 }
                             }
                         } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
                             try {watchService.close();} catch (IOException ex) { e.printStackTrace(); }
+                            Thread.currentThread().interrupt();
                         }
                     }
                 }
@@ -192,6 +192,7 @@ public class MyTableView extends TableView{
                 if (index >= data.size())
                     getSelectionModel().clearSelection();
 
+
                 if (event.getClickCount() == 2) {
                     if (index < data.size() && data.get(index).isDirectory()) {
                         setTreeRootDirectory(data.get(index));
@@ -205,6 +206,14 @@ public class MyTableView extends TableView{
                         }
                     }
                 }
+            }else if (event.getButton().equals(MouseButton.SECONDARY)){
+                TableCell cell = (TableCell) event.getSource();
+                int index = cell.getIndex();
+                if (index >= data.size())
+                    getContextMenu().getItems().get(0).setDisable(true);
+                else
+                    getContextMenu().getItems().get(0).setDisable(false);
+
             }
         }
     }
@@ -261,7 +270,7 @@ public class MyTableView extends TableView{
         }
     }
 
-    class booleanTableCell extends TableCell<MyFile, Boolean>{
+/*    class booleanTableCell extends TableCell<MyFile, Boolean>{
         @Override
         protected void updateItem(Boolean item, boolean empty) {
             super.updateItem(item, empty);
@@ -280,7 +289,7 @@ public class MyTableView extends TableView{
                 setGraphic(null);
             }
         }
-    }
+    }*/
 
     //TODO: Usuwanie katalogow do ktorych nie mamy praw dostepu
     private void setContextMenu(){
