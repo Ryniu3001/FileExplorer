@@ -70,8 +70,9 @@ public class Controller implements Initializable {
             rightUpButton.disableProperty().bind(((MyTableView)newValue.getContent()).disableUpButtonProperty());
         });
 
-    }
 
+
+    }
 
 
     @FXML
@@ -91,6 +92,13 @@ public class Controller implements Initializable {
     private void loadLang(String lang){
         main.locale = new Locale(lang);
         bundle = ResourceBundle.getBundle("bundles.Bundle", locale);
+        if (locale.getLanguage().equals("pl")){
+            langPL.setDisable(true);
+            langEN.setDisable(false);
+        }else{
+            langPL.setDisable(false);
+            langEN.setDisable(true);
+        }
 
     }
 

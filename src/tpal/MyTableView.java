@@ -6,22 +6,26 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.control.*;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
 import javafx.scene.layout.StackPane;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static java.nio.file.StandardWatchEventKinds.*;
 
 /**
  * Created by Marcin on 14.04.2016.
@@ -36,6 +40,7 @@ public class MyTableView extends TableView{
     private TextField textField;
     private final ObservableList<MyFile> data = FXCollections.observableArrayList();
     private static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm");
+    private Thread folderWatcher;
 
     public MyTableView(TextField tf){
         super();
@@ -123,6 +128,46 @@ public class MyTableView extends TableView{
             actualPath = path;
             textField.setText(actualPath.toString());
             disableUpButton.set(false);
+
+
+            WatchService watchService = FileSystems.getDefault().newWatchService();
+
+            if (folderWatcher != null) {
+                folderWatcher.interrupt();
+                folderWatcher = null;
+            }
+            folderWatcher = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    WatchKey watchKey = null;
+                    try {
+                        watchKey = actualPath.register(watchService,ENTRY_CREATE,ENTRY_DELETE,ENTRY_MODIFY);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    while (!Thread.currentThread().isInterrupted()) {
+                        try {
+                            watchKey = watchService.poll(5, TimeUnit.SECONDS);
+                            if (watchKey != null) {
+                                List<WatchEvent<?>> events = watchKey.pollEvents();
+                                for (WatchEvent event : events) {
+                                    refreshDir();
+                                }
+                                if (!watchKey.reset()) {
+                                    System.out.println("RESET");
+                                }
+                            }
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            try {watchService.close();} catch (IOException ex) { e.printStackTrace(); }
+                        }
+                    }
+                }
+            });
+            folderWatcher.setDaemon(true);
+            folderWatcher.start();
+
+
         } catch (IOException e) {
             e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -150,6 +195,14 @@ public class MyTableView extends TableView{
                 if (event.getClickCount() == 2) {
                     if (index < data.size() && data.get(index).isDirectory()) {
                         setTreeRootDirectory(data.get(index));
+                    }else if (index < data.size() && !data.get(index).isDirectory()){
+                        if (Desktop.isDesktopSupported()){
+                            try {
+                                Desktop.getDesktop().open(data.get(index).getFullPath().toFile());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
             }
@@ -201,7 +254,8 @@ public class MyTableView extends TableView{
             if (item == null){
                 setText(null);
             }else{
-                String result = sdf.format(item.toMillis());
+                DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT, Main.locale);
+                String result = formatter.format(item.toMillis());
                 setText(result);
             }
         }
