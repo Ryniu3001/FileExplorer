@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static java.nio.file.StandardWatchEventKinds.*;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 /**
  * Created by Marcin on 14.04.2016.
@@ -124,6 +126,7 @@ public class MyTableView extends TableView{
                 MyFile item = new MyFile(file);
                 data.add(item);
             }
+            dir.close();
             actualDir.set(f.getName());
             actualPath = path;
             textField.setText(actualPath.toString());
@@ -316,13 +319,17 @@ public class MyTableView extends TableView{
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(Controller.bundle.getString("remove.title"));
         alert.setHeaderText(Controller.bundle.getString(header));
+        alert.getButtonTypes().clear();
+        alert.getButtonTypes().add(new ButtonType(Controller.bundle.getString("button.ok"), ButtonBar.ButtonData.OK_DONE));
+        alert.getButtonTypes().add(new ButtonType(Controller.bundle.getString("button.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE));
         if (file == null)
             alert.setContentText(Controller.bundle.getString(content));
         else
             alert.setContentText(Controller.bundle.getString(content) + System.lineSeparator() + file.getAbsolutePath());
-
+        file = null;
         Optional<ButtonType> result = alert.showAndWait();
-        if (result.get() == ButtonType.OK){
+
+        if (result.get().getButtonData() == ButtonBar.ButtonData.OK_DONE){
             return true;
         } else {
             return false;
